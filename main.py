@@ -13,6 +13,7 @@ import threading
 from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 
 
 from dotenv import load_dotenv
@@ -39,7 +40,13 @@ if not TOKEN:
         "TELEGRAM_BOT_TOKEN មិនត្រូវបានដាក់ក្នុង Environment Variables ទេ។"
     )
 
-FRAME_PATH: str = os.environ.get("FRAME_PATH", "frame.png")
+BASE_DIR: Path = Path(__file__).resolve().parent
+_raw_frame_path: str = os.environ.get("FRAME_PATH") or "កឋិន.png"
+FRAME_PATH: str = str(
+    Path(_raw_frame_path)
+    if Path(_raw_frame_path).is_absolute()
+    else BASE_DIR / _raw_frame_path
+)
 ALBUM_TIMEOUT: float = float(os.environ.get("ALBUM_TIMEOUT", "2.0"))
 JPEG_QUALITY: int = int(os.environ.get("JPEG_QUALITY", "90"))
 
@@ -191,7 +198,9 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
                 caption="✅ នេះជារូបភាពរបស់អ្នក!",
             )
         except FileNotFoundError:
-            await status.edit_text("❌ Error: រកមិនឃើញ File 'frame.png' នៅ Server ទេ។")
+            await status.edit_text(
+                f"❌ Error: រកមិនឃើញ File Frame ('{Path(FRAME_PATH).name}') នៅ Server ទេ។"
+            )
             return
         except Exception as exc:
             logger.exception("Single photo processing error")
@@ -225,7 +234,9 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             await message.reply_media_group(media=media)
 
         except FileNotFoundError:
-            await status.edit_text("❌ Error: រកមិនឃើញ File 'frame.png' នៅ Server ទេ។")
+            await status.edit_text(
+                f"❌ Error: រកមិនឃើញ File Frame ('{Path(FRAME_PATH).name}') នៅ Server ទេ។"
+            )
             return
         except Exception as exc:
             logger.exception("Album processing error")
@@ -256,10 +267,10 @@ def main() -> None:
     # Pre-load frame ដើម្បីចាប់ Error ពីដំបូង មុន bot run
     try:
         _get_frame()
-        logger.info("frame.png loaded successfully.")
+        logger.info("Frame loaded successfully: %s", FRAME_PATH)
     except FileNotFoundError:
         logger.critical(
-            "frame.png not found at '%s' — bot will reject all images!", FRAME_PATH
+            "Frame file not found at '%s' — bot will reject all images!", FRAME_PATH
         )
 
     app = (

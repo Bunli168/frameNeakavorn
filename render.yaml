@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: frame-neakavorn-bot
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -u main.py
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: FRAME_PATH
+        value: "កឋិន.png"
+      - key: ALBUM_TIMEOUT
+        value: "2.0"
+      - key: JPEG_QUALITY
+        value: "90"
